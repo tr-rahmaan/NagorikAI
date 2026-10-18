@@ -1,0 +1,12 @@
+# Python bytecode cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Cache & Scratch
+scratch/audio_cache/
+.DS_Store
+
+# Streamlit runtime
+.streamlit/credentials.toml
