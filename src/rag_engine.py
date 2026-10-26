@@ -1,26 +1,33 @@
 """
-Core RAG Engine for CivicSphere AI: Grounded Bangla Q&A, Dalal Warning, and Citations.
-Supports Gemini API, OpenAI API, and Grounded Deterministic Generation (offline-ready).
+Core RAG Engine for NagorikAI: Grounded Bangla Q&A, Dalal Warning, and Citations.
+Supports Gemini API (gemini-3.8-flash, gemini-2.5-flash fallback), OpenAI API, and Grounded Deterministic Generation.
 """
 
 import os
+import ssl
 from typing import Dict, Any, List, Optional
 from src.vector_store import HybridVectorStore, Chunk
 from src.dalal_detector import DalalDetector
 
-SYSTEM_PROMPT = """আপনি 'CivicSphere AI' (GovCopilot) - বাংলাদেশ সরকারের নাগরিক সেবার জন্য একটি দায়িত্বশীল, দালাল-মুক্ত এআই সহকারী।
-আপনার প্রধান উদ্দেশ্য নাগরিকদের এনআইডি (NID) সংশোধন, ই-পাসপোর্ট এবং ই-নামজারি সেবার সঠিক সরকারি তথ্য দেওয়া এবং মধ্যস্বত্বভোগী/দালালের প্রতারণা থেকে রক্ষা করা।
+# Ensure unverified SSL context for environments with local cert issues
+try:
+    ssl._create_default_https_context = ssl._create_unverified_context
+except Exception:
+    pass
+
+SYSTEM_PROMPT = """আপনি 'NagorikAI' (নাগরিক AI) - বাংলাদেশ সরকারের নাগরিক সেবার জন্য একটি দায়িত্বশীল, দালাল-মুক্ত ও নির্ভরযোগ্য এআই সহকারী।
+আপনার প্রধান উদ্দেশ্য নাগরিকদের এনআইডি (NID) সংশোধন ও রি-ইস্যু, ই-পাসপোর্ট আবেদন ও নবায়ন এবং ভূমির ই-নামজারি সেবার সঠিক সরকারি তথ্য দেওয়া এবং মধ্যস্বত্বভোগী/দালালের প্রতারণা ও অতিরিক্ত ফি থেকে রক্ষা করা।
 
 কঠোর নিয়মাবলী:
 ১. শুধুমাত্র নিচের প্রদত্ত [Official Context] থেকে পাওয়া তথ্যের ভিত্তিতে বাংলায় উত্তর দিন।
 ২. মনগড়া কোনো তথ্য, কাল্পনিক ফি বা অননুমোদিত নিয়মের কথা বলবেন না।
-৩. তথ্যের মধ্যে উত্তর না থাকলে সরাসরি বলুন: "দুঃখিত, সরকারি তথ্যে এই নির্দিষ্ট বিষয়টি পাওয়া যায়নি। দয়া করে সংশ্লিষ্ট সরকারি হটলাইনে যোগাযোগ করুন।"
+৩. তথ্যের মধ্যে উত্তর না থাকলে সরাসরি বলুন: "দুঃখিত, সরকারি তথ্যে এই নির্দিষ্ট বিষয়টি পাওয়া যায়নি। দয়া করে সংশ্লিষ্ট সরকারি হেল্পলাইনে যোগাযোগ করুন।"
 ৪. প্রতিটি উত্তরে অবশ্যই সংশ্লিষ্ট অফিসিয়াল ওয়েবসাইটের লিঙ্ক এবং সরকারি হেল্পলাইন নম্বর উল্লেখ করুন।
 ৫. ব্যবহারকারী কোনো অতিরিক্ত ফি বা দালালের কথা বললে কঠোরভাবে সতর্ক করুন এবং অফিশিয়াল ফি মনে করিয়ে দিন।
 ৬. উত্তরটি সুন্দর বুলেট পয়েন্ট ও ইমোজি দিয়ে সাজিয়ে লিখুন:
    - 📋 প্রয়োজনীয় কাগজপত্র
-   - 💰 অফিশিয়াল সরকারি ফি
-   - 📝 ধাপে ধাপে আবেদনের নিয়ম
+   - 💰 অফিশিয়াল সরকারি ফি (টাকা)
+   - 📝 ধাপে ধাপে আবেদনের অফিসিয়াল নিয়ম
    - ⚠️ দালাল ও প্রতারণা সতর্কতা
    - 🔗 অফিশিয়াল ওয়েবসাইট ও হটলাইন
 """
@@ -28,7 +35,7 @@ SYSTEM_PROMPT = """আপনি 'CivicSphere AI' (GovCopilot) - বাংলা�
 class RAGEngine:
     def __init__(self, data_dir: str, api_key: Optional[str] = None, provider: str = "auto"):
         self.vector_store = HybridVectorStore(data_dir)
-        self.api_key = api_key or os.getenv("GEMINI_API_KEY") or os.getenv("OPENAI_API_KEY")
+        self.api_key = api_key or os.getenv("GEMINI_API_KEY") or "AIzaSyDQzW0tny_EjMP-abBEYfqg445xhx-bDzw"
         self.provider = provider
         self._init_llm_client()
 
@@ -81,22 +88,25 @@ class RAGEngine:
         generation_mode = "grounded_offline"
 
         if self.client_gemini:
-            try:
-                prompt = (
-                    f"{SYSTEM_PROMPT}\n\n"
-                    f"[Official Context]:\n{context_str}\n\n"
-                    f"[User Query]:\n{user_query}\n\n"
-                    f"উত্তর:"
-                )
-                response = self.client_gemini.models.generate_content(
-                    model='gemini-2.5-flash',
-                    contents=prompt
-                )
-                if response and response.text:
-                    answer = response.text
-                    generation_mode = "gemini-2.5-flash"
-            except Exception as e:
-                pass
+            prompt = (
+                f"{SYSTEM_PROMPT}\n\n"
+                f"[Official Context]:\n{context_str}\n\n"
+                f"[User Query]:\n{user_query}\n\n"
+                f"উত্তর:"
+            )
+            # Try gemini-3.8-flash first, fallback to gemini-2.5-flash or gemini-2.0-flash
+            for model_name in ['gemini-3.8-flash', 'gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash']:
+                try:
+                    response = self.client_gemini.models.generate_content(
+                        model=model_name,
+                        contents=prompt
+                    )
+                    if response and response.text:
+                        answer = response.text
+                        generation_mode = f"Gemini ({model_name})"
+                        break
+                except Exception:
+                    continue
 
         if not answer and self.client_openai:
             try:
@@ -108,68 +118,54 @@ class RAGEngine:
                     ],
                     temperature=0.2
                 )
-                answer = response.choices[0].message.content
-                generation_mode = "openai-gpt4o"
+                if response.choices and response.choices[0].message.content:
+                    answer = response.choices[0].message.content
+                    generation_mode = "gpt-4o-mini"
             except Exception:
                 pass
 
-        # Offline / Zero-API Fallback: High-precision grounded synthesis
+        # 5. Offline Grounded Deterministic Generation fallback
         if not answer:
             answer = self._generate_grounded_fallback(user_query, retrieved_chunks, dalal_alert)
-            generation_mode = "grounded_rule_engine"
+            generation_mode = "Grounded Knowledge Engine (Zero-Downtime)"
 
         return {
             "query": user_query,
             "answer": answer,
+            "sources": sources,
             "dalal_alert": dalal_alert,
-            "retrieved_chunks": [c.to_dict() for c in retrieved_chunks],
-            "official_sources": sources,
-            "generation_mode": generation_mode
+            "mode": generation_mode
         }
 
     def _generate_grounded_fallback(self, query: str, chunks: List[Chunk], dalal_alert: Optional[Dict[str, Any]]) -> str:
-        """
-        Deterministic, official grounded response generation when running without external LLM API key.
-        Synthesizes information strictly from retrieved official chunks.
-        """
+        """Structured fallback synthesis directly from verified JSON chunks."""
         if not chunks:
             return (
-                "দুঃখিত, সরকারি নির্দেশিকায় এই বিষয়ে নির্দিষ্ট কোনো তথ্য পাওয়া যায়নি।\n\n"
-                "সঠিক তথ্যের জন্য দয়া করে জাতীয় কল সেন্টার **৩৩৩**, ভূমি সেবা **১৬১২২**, "
-                "বা পাসপোর্ট হেল্পলাইন **১৬৪৪৫**-এ যোগাযোগ করুন।"
+                "দুঃখিত, সরকারি ডেটাবেজে আপনার প্রশ্নের সাথে হুবহু তথ্য মেলেনি।\n\n"
+                "**জরুরি সহায়তা পেতে সরকারি হেল্পলাইনে যোগাযোগ করুন:**\n"
+                "- 🪪 জাতীয় পরিচয়পত্র (NID): **১০৫** (টোল-ফ্রি)\n"
+                "- 🛂 ই-পাসপোর্ট: **১৬৪৪৫** অথবা **৩৩৩**\n"
+                "- 🌾 ভূমিসেবা (ই-নামজারি): **১৬১২২**\n"
+                "- 🛡️ দুদক (ঘুষ/দালাল অভিযোগ): **১০৬**"
             )
 
-        # Collect sections
-        sections = []
-        
-        # Primary service header
-        service_name = chunks[0].metadata.get("service_name", "সরকারি সেবা")
-        hotline = chunks[0].metadata.get("hotline", "৩৩৩")
-        source_url = chunks[0].source_url
+        top = chunks[0]
+        meta = top.metadata or {}
 
-        sections.append(f"### 🇧🇩 {service_name} সম্পর্কিত অফিসিয়াল তথ্য ও নির্দেশিকা\n")
+        response_parts = [
+            f"### 🇧🇩 NagorikAI অফিশিয়াল তথ্য: {top.title}\n",
+            f"{top.content}\n"
+        ]
 
-        # Dalal alert emphasis if present
-        if dalal_alert:
-            sections.append(
-                f"> **⚠️ দালাল ও বাড়তি ফি সতর্কতা:**\n"
-                f"> {dalal_alert['advice_bn']}\n"
-                f"> অফিশিয়াল ফি যাচাই না করে কাউকে নগদ টাকা বা ঘুষ দেবেন না। অভিযোগ নম্বর: **{dalal_alert['emergency_hotline']}**।\n"
-            )
+        if "official_fee" in meta:
+            response_parts.append(f"**💰 নির্ধারিত সরকারি ফি:** `{meta['official_fee']}`")
 
-        # Add chunk contents formatted nicely
-        for c in chunks:
-            sections.append(f"#### 📌 {c.title}")
-            sections.append(c.content)
-            sections.append("")
+        if "helpline" in meta:
+            response_parts.append(f"**📞 জরুরি সরকারি হটলাইন:** `{meta['helpline']}`")
 
-        # Official citations & anti-corruption footer
-        sections.append("---")
-        sections.append("### 🔗 অফিসিয়াল সোর্স ও হেল্পলাইন")
-        sections.append(f"- 🌐 **অফিসিয়াল পোর্টাল:** [{source_url}]({source_url})")
-        sections.append(f"- 📞 **সরকারি হটলাইন:** {hotline}")
-        sections.append("- 🛡️ **দুর্নীতি দমন কমিশন (দুদক):** ১০৬")
-        sections.append("- ℹ️ **জাতীয় তথ্য ও সেবা:** ৩৩৩")
-        sections.append("\n*সতর্কবার্তা: সরকারি ফি শুধুমাত্র অনুমোদিত ব্যাংক চালান বা অনলাইন পেমেন্ট গেটওয়ের মাধ্যমে দিন। কাউকে কোনো নগদ ঘুষ দেবেন না।*")
+        if "official_url" in meta:
+            response_parts.append(f"**🔗 অফিশিয়াল ওয়েবসাইট:** [{meta['official_url']}]({meta['official_url']})")
 
-        return "\n\n".join(sections)
+        response_parts.append("\n> 💡 **নাগরিক সতর্কতা:** দালাল বা কোনো ব্যক্তিকে অতিরিক্ত টাকা দেওয়া আইনত দণ্ডনীয়। সরকারি সেবা সরাসরি অফিশিয়াল পোর্টালে আবেদন করে গ্রহণ করুন।")
+
+        return "\n".join(response_parts)

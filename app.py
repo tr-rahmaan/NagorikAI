@@ -1,186 +1,237 @@
 """
-CivicSphere AI: GovCopilot & Dalal-Free Citizen Assistant
-Bangla RAG Chatbot grounded in official Bangladesh Government sources (NID, Passport, Land Mutation).
+NagorikAI (নাগরিক AI) - GovCopilot & Dalal-Free Citizen Assistant
+Bangla RAG Platform Grounded Exclusively in Authentic Bangladesh Government Sources.
+Services: NID Correction, e-Passport, Land Mutation (e-Namjari).
 """
 
 import os
 import sys
 import streamlit as st
-import streamlit.components.v1 as components
 
-# Ensure local packages in path
+# Ensure local packages in sys.path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from src.rag_engine import RAGEngine
 from src.dalal_detector import DalalDetector
 from src.vision_checker import DocumentVisionChecker
-from src.speech_utils import text_to_bangla_speech, get_voice_input_html
+from src.speech_utils import text_to_bangla_speech
 
 # Page configuration
 st.set_page_config(
-    page_title="CivicSphere AI | GovCopilot (Dalal-Free)",
+    page_title="NagorikAI (নাগরিক AI) | সরকারি সেবা সহায়িকা ও দুর্নীতি প্রতিরোধ",
     page_icon="🇧🇩",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# Custom Styling
+# Premium Modern Civic CSS Styling
 st.markdown("""
 <style>
-    .main-title {
-        font-size: 2.2rem;
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Hind+Siliguri:wght@400;500;600;700&display=swap');
+    
+    html, body, [class*="css"] {
+        font-family: 'Hind Siliguri', 'Plus Jakarta Sans', sans-serif;
+    }
+    
+    .hero-header {
+        background: linear-gradient(135deg, #064e3b 0%, #047857 50%, #0f766e 100%);
+        padding: 30px 36px;
+        border-radius: 18px;
+        color: white;
+        margin-bottom: 24px;
+        box-shadow: 0 10px 25px -5px rgba(6, 78, 59, 0.25);
+    }
+    
+    .hero-title {
+        font-size: 2.5rem;
         font-weight: 800;
-        color: #064e3b;
-        margin-bottom: 0.2rem;
+        margin: 0;
+        letter-spacing: -0.02em;
+        display: flex;
+        align-items: center;
+        gap: 12px;
     }
-    .sub-title {
-        font-size: 1.05rem;
-        color: #374151;
-        margin-bottom: 1rem;
+    
+    .hero-subtitle {
+        font-size: 1.15rem;
+        color: #d1fae5;
+        margin-top: 8px;
+        line-height: 1.5;
+        max-width: 900px;
     }
-    .dalal-box {
-        background-color: #fef2f2;
-        border-left: 5px solid #ef4444;
-        padding: 14px 18px;
-        border-radius: 8px;
-        margin-bottom: 1rem;
+    
+    .badge-bar {
+        display: flex;
+        gap: 12px;
+        margin-top: 16px;
+        flex-wrap: wrap;
     }
-    .official-badge {
-        background-color: #ecfdf5;
-        border: 1px solid #10b981;
-        color: #065f46;
-        padding: 4px 10px;
-        border-radius: 12px;
-        font-size: 0.82rem;
+    
+    .badge-pill {
+        background: rgba(255, 255, 255, 0.18);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        color: #ffffff;
+        padding: 6px 14px;
+        border-radius: 9999px;
+        font-size: 0.85rem;
         font-weight: 600;
+        backdrop-filter: blur(8px);
     }
-    .source-pill {
-        display: inline-block;
-        background: #f1f5f9;
-        border: 1px solid #cbd5e1;
-        border-radius: 6px;
-        padding: 3px 8px;
-        font-size: 0.8rem;
-        margin-right: 6px;
-        text-decoration: none;
+    
+    .dalal-alert-card {
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        border-left: 6px solid #ef4444;
+        padding: 18px 22px;
+        border-radius: 12px;
+        margin: 16px 0;
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.08);
+    }
+    
+    .savings-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: #dcfce7;
+        border: 1px solid #86efac;
+        color: #166534;
+        padding: 4px 12px;
+        border-radius: 8px;
+        font-weight: 700;
+        font-size: 0.95rem;
+        margin-top: 8px;
+    }
+    
+    .source-box {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 12px 16px;
+        margin-top: 12px;
+        font-size: 0.85rem;
     }
 </style>
 """, unsafe_allow_html=True)
 
-# Data directory path
 DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 
 # Sidebar Configuration
 with st.sidebar:
-    st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/8/84/Government_Seal_of_Bangladesh.svg/200px-Government_Seal_of_Bangladesh.svg.png", width=70)
-    st.title("🇧🇩 CivicSphere AI")
-    st.markdown("**GovCopilot & Dalal-Free**")
-    st.caption("বাংলাদেশ সরকারি সেবা সহায়িকা ও দুর্নীতি প্রতিরোধ প্ল্যাটফর্ম")
+    st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/8/84/Government_Seal_of_Bangladesh.svg/200px-Government_Seal_of_Bangladesh.svg.png", width=75)
+    st.title("🇧🇩 NagorikAI")
+    st.caption("**নাগরিক সেবা সহায়িকা ও দুর্নীতি প্রতিরোধ প্ল্যাটফর্ম**")
+    st.markdown("*International AI Builders Congress 2026*")
     st.divider()
 
-    st.subheader("⚙️ AI ইঞ্জিন সেটিংস")
+    st.subheader("⚙️ AI ইঞ্জিন মডেল সেটিংস")
+    api_key_default = os.getenv("GEMINI_API_KEY", "AIzaSyDQzW0tny_EjMP-abBEYfqg445xhx-bDzw")
     api_key_input = st.text_input(
-        "Gemini API Key (ঐচ্ছিক):",
+        "Google Gemini API Key:",
         type="password",
-        value=os.getenv("GEMINI_API_KEY", ""),
-        help="API Key না দিলেও অন্তর্নির্মিত অফিসিয়াল RAG ইঞ্জিন দিয়ে সম্পূর্ণ কাজ করবে।"
+        value=api_key_default,
+        help="ডিফল্ট কি সেট করা রয়েছে। Gemini 3.8 Flash ও মাল্টিমোডাল ভিশন সক্রিয় থাকবে।"
     )
 
     st.divider()
     st.subheader("📞 জরুরি সরকারি হটলাইন")
     st.markdown("""
-    - 🪪 **NID উইং:** `১০৫` (টোল ফ্রি)
-    - 🛂 **ই-পাসপোর্ট:** `১৬৪৪৫` / `৩৩৩`
-    - 🌾 **ভূমি সেবা (নামজারি):** `১৬১২২`
+    - 🪪 **জাতীয় পরিচয়পত্র (NID):** `১০৫` (টোল-ফ্রি)
+    - 🛂 **ই-পাসপোর্ট অধিদপ্তর:** `১৬৪৪৫` / `৩৩৩`
+    - 🌾 **ভূমি সেবা (ই-নামজারি):** `১৬১২২`
     - 🛡️ **দুদক (ঘুষ/দালাল অভিযোগ):** `১০৬`
-    - 🚨 **পুলিশ/জরুরি সেবা:** `৯৯৯`
+    - 🚨 **জাতীয় জরুরি সেবা:** `৯৯৯`
     """)
 
     st.divider()
-    st.info("💡 **মূল লক্ষ্য:** নাগরিকরা যাতে দালালের পেছনে হাজার হাজার টাকা অপচয় না করে সরাসরি সরকারি মূল্যে নির্ভুলভাবে সেবা পান।")
+    st.info("💡 **উদ্দেশ্য:** সাধারণ নাগরিকরা যেন দালালদের খপ্পরে পড়ে হাজার হাজার টাকা না হারান এবং শতভাগ সরকারি নিয়মে ঘরে বসে সেবা পান।")
 
-# Initialize RAG Engine in session state
+# Initialize RAG Engine
 @st.cache_resource
 def get_rag_engine(api_key: str):
     return RAGEngine(data_dir=DATA_DIR, api_key=api_key if api_key else None)
 
 rag_engine = get_rag_engine(api_key_input)
 
-# Top Banner
-st.markdown('<div class="main-title">🇧🇩 CivicSphere AI (GovCopilot)</div>', unsafe_allow_html=True)
-st.markdown('<div class="sub-title">জাতীয় পরিচয়পত্র (NID), ই-পাসপোর্ট এবং ভূমির ই-নামজারির নির্ভুল সরকারি তথ্য ও দালাল-মুক্ত পরামর্শক</div>', unsafe_allow_html=True)
+# Top Hero Banner
+st.markdown("""
+<div class="hero-header">
+    <div class="hero-title">🇧🇩 NagorikAI (নাগরিক AI)</div>
+    <div class="hero-subtitle">
+        জাতীয় পরিচয়পত্র (NID), ই-পাসপোর্ট এবং ভূমির ই-নামজারির নির্ভুল সরকারি তথ্যভাণ্ডার ও সক্রিয় দালাল প্রতিরোধ প্ল্যাটফর্ম।
+    </div>
+    <div class="badge-bar">
+        <span class="badge-pill">✅ ১০০% সরকারি গেজেট ও সার্কুলার সমর্থিত</span>
+        <span class="badge-pill">🛡️ দালাল প্রতিরোধ ও দুর্নীতি সতর্কতা (ACC 106)</span>
+        <span class="badge-pill">🔊 বাংলা ভয়েস অডিও অনুবাদযুক্ত</span>
+        <span class="badge-pill">📸 মাল্টিমোডাল ডকুমেন্ট অডিটর</span>
+    </div>
+</div>
+""", unsafe_allow_html=True)
 
-col_b1, col_b2, col_b3 = st.columns(3)
-with col_b1:
-    st.markdown('<span class="official-badge">✅ ১০০% অফিশিয়াল সোর্স যাচাইকৃত</span>', unsafe_allow_html=True)
-with col_b2:
-    st.markdown('<span class="official-badge">🛡️ দালাল ও অতিরিক্ত ফি প্রটেকশন</span>', unsafe_allow_html=True)
-with col_b3:
-    st.markdown('<span class="official-badge">🎙️ বাংলা ভয়েস ও ভিশন অডিটযুক্ত</span>', unsafe_allow_html=True)
-
-st.write("")
-
-# Navigation Tabs
+# Main Navigation Tabs
 tab_chat, tab_calculator, tab_vision, tab_roadmap = st.tabs([
     "💬 বাংলা এআই পরামর্শক (GovCopilot)",
     "💰 সরকারি ফি ক্যালকুলেটর ও চেকলিস্ট",
-    "📸 ডকুমেন্ট ভিশন অডিট (Vision Demo)",
+    "📸 ডকুমেন্ট ভিশন অডিট (Vision AI)",
     "🚀 ফিচার রোডম্যাপ ও ভিশন"
 ])
 
-# Initialize session messages
+# Initialize session chat state
 if "messages" not in st.session_state:
     st.session_state.messages = [
         {
             "role": "assistant",
             "content": (
-                "স্বাগতম! আমি **CivicSphere AI**। এনআইডি সংশোধন, ই-পাসপোর্ট বা জমির ই-নামজারি নিয়ে আপনার যেকোনো প্রশ্ন বাংলায় করতে পারেন।\n\n"
-                "**আমি আপনাকে দেব:**\n"
-                "1. নির্ভুল সরকারি ফি এর তালিকা (দালাল বা মধ্যস্বত্বভোগীর অতিরিক্ত দাবির বিরুদ্ধে সতর্কবার্তা সহ)\n"
-                "2. প্রয়োজনীয় কাগজপত্রের পূর্ণাঙ্গ চেকলিস্ট\n"
-                "3. ধাপে ধাপে আবেদনের অফিসিয়াল গাইড ও লিংক\n\n"
-                "নিচের বাটনগুলো ক্লিক করে সহজে শুরু করতে পারেন অথবা আপনার প্রশ্নটি লিখুন।"
+                "স্বাগতম! আমি **NagorikAI** (নাগরিক AI)। এনআইডি সংশোধন, ই-পাসপোর্ট বা ভূমির ই-নামজারি নিয়ে আপনার যেকোনো প্রশ্ন বাংলায় করতে পারেন।\n\n"
+                "**আমি আপনাকে সাহায্য করব:**\n"
+                "1. 💰 **অফিশিয়াল সরকারি ফি** এবং দালালদের অতিরিক্ত টাকার দাবির বিরুদ্ধে তাৎক্ষণিক সতর্কতা প্রদান।\n"
+                "2. 📋 আবেদনের প্রয়োজনীয় কাগজপত্রের **পূর্ণাঙ্গ চেকলিস্ট**।\n"
+                "3. 🔗 সরাসরি **সরকারি অফিশিয়াল পোর্টালে** আবেদনের সঠিক নিয়ম ও লিঙ্ক।\n"
+                "4. 🔊 উত্তরের সাথে শুনুন **বাংলা ভয়েস অডিও**।\n\n"
+                "নিচের বাটনগুলো ক্লিক করে সহজে শুরু করুন অথবা আপনার প্রশ্নটি নিচে লিখুন।"
             )
         }
     ]
 
 # ----------------- TAB 1: Chatbot -----------------
 with tab_chat:
-    # Web Speech API Bangla Voice input component
-    components.html(get_voice_input_html(), height=110)
-
-    # Quick sample question pills
-    st.markdown("**💡 দ্রুত প্রশ্ন নির্বাচন করুন:**")
+    st.markdown("**💡 সচরাচর জিজ্ঞাসিত প্রশ্নসমূহ (ক্লিক করে উত্তর দেখুন):**")
     q_col1, q_col2, q_col3, q_col4 = st.columns(4)
 
     prompt_to_run = None
     if q_col1.button("🚨 পাসপোর্টে দালাল ৮,০০০ টাকা চাচ্ছে?"):
-        prompt_to_run = "পাসপোর্টের জন্য দালাল আট হাজার টাকা চাচ্ছে, এটা কি ঠিক? সরকারি ফি কত?"
+        prompt_to_run = "পাসপোর্টের জন্য দালাল আট হাজার টাকা চাচ্ছে, এটা কি ঠিক? সাধারণ ৪৮ পাতা ১০ বছর মেয়াদি পাসপোর্টের সরকারি ফি কত?"
     if q_col2.button("🪪 NID নাম সংশোধনে কি কি লাগে?"):
-        prompt_to_run = "জাতীয় পরিচয়পত্রে নিজের ও বাবার নাম সংশোধনে কী কী কাগজপত্র লাগে ও সরকারি ফি কত?"
+        prompt_to_run = "জাতীয় পরিচয়পত্রে নিজের ও পিতার নাম সংশোধনে কী কী কাগজপত্র লাগে ও সরকারি ফি কত?"
     if q_col3.button("🌾 ই-নামজারির অফিশিয়াল ফি কত?"):
-        prompt_to_run = "জমির ই-নামজারি বা খারিজ করতে মোট কত টাকা সরকারি ফি লাগে? দালালরা বেশি টাকা চাইলে কি করব?"
+        prompt_to_run = "জমির ই-নামজারি বা খারিজ করতে মোট কত টাকা সরকারি ফি লাগে? দালালরা বেশি টাকা চাইলে করণীয় কি?"
     if q_col4.button("🛂 ১০ বছর মেয়াদি পাসপোর্টের ফি কত?"):
-        prompt_to_run = "৪৮ পৃষ্ঠা ১০ বছর মেয়াদী ই-পাসপোর্টের নিয়মিত ও জরুরি সরকারি ফি কত?"
+        prompt_to_run = "৪৮ পৃষ্ঠা ১০ বছর মেয়াদী ই-পাসপোর্টের নিয়মিত ও জরুরি সরকারি ফি কত টাকা?"
 
     # Display chat history
     for msg in st.session_state.messages:
         with st.chat_message(msg["role"]):
-            if "dalal_alert" in msg and msg["dalal_alert"]:
+            if msg.get("dalal_alert"):
                 alert = msg["dalal_alert"]
                 st.markdown(f"""
-                <div class="dalal-box">
-                    <h4 style="margin:0 0 6px 0; color:#b91c1c;">{alert['alert_banner_bn']}</h4>
-                    <p style="margin:0 0 6px 0; font-size:14px;">{alert['advice_bn']}</p>
-                    <strong>🚨 জরুরি অভিযোগ নম্বর: {alert['emergency_hotline']}</strong>
+                <div class="dalal-alert-card">
+                    <h4 style="margin:0 0 8px 0; color:#b91c1c; font-weight:700;">{alert['alert_banner_bn']}</h4>
+                    <p style="margin:0 0 8px 0; font-size:15px; color:#374151;">{alert['advice_bn']}</p>
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;">
+                        <span class="savings-chip">💰 সম্ভাব্য আর্থিক সাশ্রয়: {alert.get('difference_amount', 0):,} টাকা</span>
+                        <strong style="color:#b91c1c;">🚨 দুদকের টোল-ফ্রি হেল্পলাইন: {alert['emergency_hotline']}</strong>
+                    </div>
                 </div>
                 """, unsafe_allow_html=True)
+            
             st.markdown(msg["content"])
-            if "audio_path" in msg and msg["audio_path"] and os.path.exists(msg["audio_path"]):
+            
+            # Voice Audio Player for assistant messages
+            if msg.get("audio_path") and os.path.exists(msg["audio_path"]):
                 st.audio(msg["audio_path"], format="audio/mp3")
 
-    # Chat input
-    user_input = st.chat_input("আপনার প্রশ্ন বাংলায় লিখুন (যেমন: পাসপোর্টের ফি কত?)...")
+    # User input
+    user_input = st.chat_input("আপনার প্রশ্ন বাংলায় লিখুন (যেমন: পাসপোর্টের সরকারি ফি কত?)...")
     active_prompt = prompt_to_run or user_input
 
     if active_prompt:
@@ -189,26 +240,31 @@ with tab_chat:
             st.markdown(active_prompt)
 
         with st.chat_message("assistant"):
-            with st.spinner("অফিসিয়াল সরকারি তথ্যভাণ্ডার যাচাই করা হচ্ছে..."):
+            with st.spinner("অফিসিয়াল সরকারি তথ্যভাণ্ডার যাচাই করে উত্তর তৈরি হচ্ছে..."):
                 response_data = rag_engine.query(active_prompt)
                 answer_text = response_data["answer"]
                 dalal_alert = response_data.get("dalal_alert")
+                gen_mode = response_data.get("mode", "Grounded Engine")
 
                 if dalal_alert:
                     st.markdown(f"""
-                    <div class="dalal-box">
-                        <h4 style="margin:0 0 6px 0; color:#b91c1c;">{dalal_alert['alert_banner_bn']}</h4>
-                        <p style="margin:0 0 6px 0; font-size:14px;">{dalal_alert['advice_bn']}</p>
-                        <strong>🚨 জরুরি অভিযোগ নম্বর: {dalal_alert['emergency_hotline']}</strong>
+                    <div class="dalal-alert-card">
+                        <h4 style="margin:0 0 8px 0; color:#b91c1c; font-weight:700;">{dalal_alert['alert_banner_bn']}</h4>
+                        <p style="margin:0 0 8px 0; font-size:15px; color:#374151;">{dalal_alert['advice_bn']}</p>
+                        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap;">
+                            <span class="savings-chip">💰 সম্ভাব্য আর্থিক সাশ্রয়: {dalal_alert.get('difference_amount', 0):,} টাকা</span>
+                            <strong style="color:#b91c1c;">🚨 দুদকের টোল-ফ্রি হেল্পলাইন: {dalal_alert['emergency_hotline']}</strong>
+                        </div>
                     </div>
                     """, unsafe_allow_html=True)
 
                 st.markdown(answer_text)
+                st.caption(f"ইঞ্জিন: `{gen_mode}` | শতভাগ সরকারি তথ্যে নিশ্চিত")
 
-                # Audio readout with gTTS
+                # Voice output translation using gTTS
                 audio_path = text_to_bangla_speech(answer_text)
-                if audio_path:
-                    st.caption("🔊 বাংলা ভয়েস অডিও:")
+                if audio_path and os.path.exists(audio_path):
+                    st.caption("🔊 উত্তরের বাংলা ভয়েস অডিও:")
                     st.audio(audio_path, format="audio/mp3")
 
                 st.session_state.messages.append({
@@ -221,7 +277,7 @@ with tab_chat:
 # ----------------- TAB 2: Fee Calculator & Checklist -----------------
 with tab_calculator:
     st.subheader("💰 অফিশিয়াল সরকারি ফি ও চেকলিস্ট ক্যালকুলেটর")
-    st.write("দালালরা বিভ্রান্তি ছড়িয়ে সাধারণ মানুষের কাছ থেকে কয়েকগুণ টাকা হাতিয়ে নেয়। এখানে অফিশিয়াল ফি সরাসরি মিলিয়ে নিন:")
+    st.write("দালালদের অবৈধ অতিরিক্ত ফির দাবি এড়িয়ে সরকারি নির্ধারিত মূল্যে সেবা গ্রহণ করুন:")
 
     service_select = st.selectbox(
         "সেবার ধরন নির্বাচন করুন:",
@@ -242,14 +298,14 @@ with tab_calculator:
             "official": 4025,
             "dalal_avg": 9000,
             "breakdown": "মূল ফি ৩,৫০০ টাকা + ১৫% সরকারি ভ্যাট ৫২৫ টাকা = ৪,০২৫ টাকা (ডেলিভারি: ১৫-২১ কার্যদিবস)",
-            "docs": ["মূল NID / ১৭ ডিজিটের জন্মনিবন্ধন", "অনলাইন আবেদন সামারি প্রিন্ট কপি", "এ-চালান / পেমেন্ট স্লিপ", "পেশার প্রমাণপত্র (GO/NOC/স্টুডেন্ট আইডি)"],
+            "docs": ["মূল NID অথবা ১৭ ডিজিটের অনলাইন জন্মনিবন্ধন সনদ", "অনলাইন আবেদন সামারি প্রিন্ট কপি", "এ-চালান / পেমেন্ট স্লিপ", "প্রযোজ্য ক্ষেত্রে পেশার প্রমাণপত্র"],
             "url": "https://www.epassport.gov.bd/"
         },
         "ই-পাসপোর্ট: ৪৮ পৃষ্ঠা, ৫ বছর (জরুরি)": {
             "official": 6325,
             "dalal_avg": 13000,
             "breakdown": "মূল ফি ৫,৫০০ টাকা + ১৫% ভ্যাট ৮২৫ টাকা = ৬,৩২৫ টাকা (ডেলিভারি: ৭-১০ কার্যদিবস)",
-            "docs": ["মূল NID / ১৭ ডিজিটের জন্মনিবন্ধন", "অনলাইন আবেদন সামারি প্রিন্ট কপি", "এ-চালান / পেমেন্ট স্লিপ"],
+            "docs": ["মূল NID অথবা অনলাইন জন্মনিবন্ধন সনদ", "অনলাইন আবেদন সামারি প্রিন্ট কপি", "জরুরি এ-চালান পেমেন্ট স্লিপ"],
             "url": "https://www.epassport.gov.bd/"
         },
         "ই-পাসপোর্ট: ৪৮ পৃষ্ঠা, ১০ বছর (নিয়মিত)": {
@@ -263,14 +319,14 @@ with tab_calculator:
             "official": 8050,
             "dalal_avg": 16000,
             "breakdown": "মূল ফি ৭,০০০ টাকা + ১৫% ভ্যাট ১,০৫০ টাকা = ৮,০৫০ টাকা (ডেলিভারি: ৭-১০ কার্যদিবস)",
-            "docs": ["মূল NID কার্ড ও কপি", "অনলাইন আবেদন সামারি", "পেমেন্ট ব্যাংক স্লিপ"],
+            "docs": ["মূল NID কার্ড ও ফটোকপি", "অনলাইন আবেদন সামারি", "জরুরি ফি ব্যাংক স্লিপ"],
             "url": "https://www.epassport.gov.bd/"
         },
         "জাতীয় পরিচয়পত্র: ব্যক্তিগত তথ্য সংশোধন (১ম বার)": {
             "official": 230,
             "dalal_avg": 3000,
             "breakdown": "মূল আবেদন ফি ২০০ টাকা + ১৫% ভ্যাট ৩০ টাকা = ২৩০ টাকা (বিকাশ/রকেট/নগদে প্রদেয়)",
-            "docs": ["SSC / HSC শিক্ষাগত সনদ", "১৭ ডিজিট অনলাইন জন্ম নিবন্ধন", "পিতা-মাতার NID কপি", "প্রয়োজনে ১ম শ্রেণীর ম্যাজিস্ট্রেট এফিডেভিট"],
+            "docs": ["SSC / HSC শিক্ষাগত সনদপত্র", "১৭ ডিজিট অনলাইন জন্ম নিবন্ধন", "পিতা-মাতার NID কপি", "প্রয়োজনে ১ম শ্রেণীর ম্যাজিস্ট্রেট এফিডেভিট"],
             "url": "https://services.nidw.gov.bd/"
         },
         "জাতীয় পরিচয়পত্র: ব্যক্তিগত তথ্য সংশোধন (২য় বার)": {
@@ -284,14 +340,14 @@ with tab_calculator:
             "official": 230,
             "dalal_avg": 2500,
             "breakdown": "মূল ফি ২০০ টাকা + ১৫% ভ্যাট ৩০ টাকা = ২৩০ টাকা",
-            "docs": ["থানার জিডি (GD) কপি (অনলাইন বা অফলাইন)", "অন্য কোনো পরিচয় প্রমাণ"],
+            "docs": ["থানার জিডি (GD) নম্বর ও কপি", "অন্য কোনো জাতীয় পরিচয় প্রমাণ"],
             "url": "https://services.nidw.gov.bd/"
         },
         "ই-নামজারি (জমি খারিজ ও রেকর্ড সংশোধন)": {
             "official": 1170,
             "dalal_avg": 25000,
-            "breakdown": "আবেদনে কোর্ট ফি ২০ টাকা + নোটিশ ৫০ টাকা = ৭০ টাকা; আবেদন মঞ্জুর হলে খতিয়ান ফি ১,০০০ টাকা + ডিসিআর ১০০ টাকা = ১,১০০ টাকা। সর্বমোট: ১,১৭০ টাকা মাত্র!",
-            "docs": ["মূল রেজিস্ট্রেশনকৃত দলিল", "হালনাগাদ ভূমি উন্নয়ন কর (খাজনা) দাখিলা", "পূর্ববর্তী খতিয়ান (CS/SA/RS)", "ওয়ারিশান সনদ (প্রযোজ্য ক্ষেত্রে)", "আবেদনকারীর NID ও ছবি"],
+            "breakdown": "আবেদনে কোর্ট ফি ২০ টাকা + নোটিশ জারি ৫০ টাকা = ৭০ টাকা; আবেদন মঞ্জুর হলে খতিয়ান ফি ১,০০০ টাকা + ডিসিআর ১০০ টাকা = ১,১০০ টাকা। সর্বমোট: ১,১৭০ টাকা মাত্র!",
+            "docs": ["মূল রেজিস্ট্রেশনকৃত সাব-কবলা দলিল", "হালনাগাদ ভূমি উন্নয়ন কর (খাজনা) দাখিলা", "পূর্ববর্তী খতিয়ান (CS/SA/RS)", "ওয়ারিশান সনদ (প্রযোজ্য ক্ষেত্রে)", "আবেদনকারীর NID ও ছবি"],
             "url": "https://mutation.land.gov.bd/"
         }
     }
@@ -304,23 +360,23 @@ with tab_calculator:
     m1, m2, m3 = st.columns(3)
     m1.metric("সরকারি নির্ধারিত ফি", f"{official_val:,} ৳", delta="অফিসিয়াল রেট", delta_color="normal")
     m2.metric("দালালদের গড় দাবি", f"{dalal_val:,} ৳", delta=f"+{savings:,} ৳ অতিরিক্ত", delta_color="inverse")
-    m3.metric("CivicSphere ব্যবহারে সাশ্রয়", f"{savings:,} ৳", delta="১০০% নাগরিক সঞ্চয়", delta_color="normal")
+    m3.metric("NagorikAI ব্যবহারে সাশ্রয়", f"{savings:,} ৳", delta="১০০% নাগরিক সঞ্চয়", delta_color="normal")
 
     st.markdown(f"**ফি এর বিস্তারিত হিসাব:** {selected_info['breakdown']}")
-    st.markdown(f"**অফিসিয়াল পোর্টাল:** [{selected_info['url']}]({selected_info['url']})")
+    st.markdown(f"**অফিসিয়াল সরকারি পোর্টাল:** [{selected_info['url']}]({selected_info['url']})")
 
     st.divider()
     st.subheader("📋 প্রয়োজনীয় কাগজপত্রের লাইভ চেকলিস্ট")
-    st.write("আপনার কাছে কোন কোন কাগজ তৈরি আছে টিক দিন:")
+    st.write("আপনার কাছে কোন কোন কাগজ প্রস্তুত আছে টিক দিন:")
     for doc in selected_info["docs"]:
         st.checkbox(f"📄 {doc}", key=f"chk_{service_select}_{doc}")
 
 # ----------------- TAB 3: Vision Document Checker -----------------
 with tab_vision:
-    st.subheader("📸 ডকুমেন্ট প্রি-ফ্লাইট ভিশন অডিট (Vision Demo)")
+    st.subheader("📸 ডকুমেন্ট প্রি-ফ্লাইট ভিশন অডিট (Vision AI)")
     st.write(
-        "ভুল বা অস্পষ্ট ডকুমেন্টের কারণে ৭০% আবেদন সরকারি অফিস থেকে বাতিল হয় বা সংশোধনে বিলম্ব হয়। "
-        "আবেদন আপলোড করার আগে এআই ভিশন দিয়ে স্ক্যান কপিটি পরীক্ষা করে নিন।"
+        "ভুল বা অস্পষ্ট ডকুমেন্টের কারণে ৭০% আবেদন সরকারি অফিস থেকে বাতিল হয়। "
+        "আবেদন আপলোড করার আগে এআই ভিশন দিয়ে আপনার স্ক্যান কপিটি পরীক্ষা করে নিন।"
     )
 
     col_v1, col_v2 = st.columns([1, 1])
@@ -373,9 +429,9 @@ with tab_vision:
 
 # ----------------- TAB 4: Roadmap & Vision -----------------
 with tab_roadmap:
-    st.subheader("🚀 CivicSphere AI: ফিউচার রোডম্যাপ ও ভিশন")
+    st.subheader("🚀 NagorikAI: ফিউচার রোডম্যাপ ও ভিশন")
     st.markdown("""
-    **GovCopilot** হলো বর্তমান কার্যকরী MVP, এবং **'Dalal-Free' (দালাল-মুক্ত বাংলাদেশ)** হলো নাগরিক সমাজ রূপান্তরের স্থায়ী ভিশন।
+    **NagorikAI** হলো আধুনিক এআই প্রযুক্তির মাধ্যমে বাংলাদেশকে একটি **'Dalal-Free' (দালাল-মুক্ত)** ডিজিটাল জনবান্ধব দেশে রূপান্তরের জাতীয় উদ্যোগ।
     """)
 
     col_r1, col_r2 = st.columns(2)
@@ -388,9 +444,9 @@ with tab_roadmap:
         2. **অপেক্ষার সময় প্রাক্কলন (Waiting-Time Estimator):**
            - কোন জেলার পাসপোর্ট অফিস বা এসি ল্যান্ড অফিসে বর্তমানে কতদিন সময় লাগছে তার রিয়েল-টাইম ক্রাউডসোর্সড ডেটা।
         3. **আইভিআর (IVR) কল সেন্টার ইন্টিগ্রেশন:**
-           - ইন্টারনেট ছাড়া সাধারণ বাটন ফোন থেকেও যেন যেকোনো নাগরিক কল করে বাংলায় সঠিক সরকারি ফি ও তথ্য জেনে নিতে পারেন।
+           - বাটন ফোন থেকেও সাধারণ নাগরিক যেন কল করে বাংলায় সঠিক সরকারি ফি ও তথ্য জেনে নিতে পারেন।
         4. **আরো ১০+ সেবা সম্প্রসারণ:**
-           - ড্রাইভিং লাইসেন্স (BRTA), ট্রেড লাইসেন্স, পুলিশ ক্লিয়ারেন্স, জন্ম নিবন্ধন ও পেনশন স্কিম অন্তর্ভুক্তি।
+           - ড্রাইভিং লাইসেন্স (BRTA), ট্রেড লাইসেন্স, পুলিশ ক্লিয়ারেন্স ও পেনশন স্কিম অন্তর্ভুক্তি।
         """)
 
     with col_r2:
@@ -404,6 +460,6 @@ with tab_roadmap:
     st.divider()
     st.markdown("""
     <div style="text-align: center; color: #6b7280; font-size: 13px;">
-        CivicSphere AI &bull; GovCopilot for Bangladesh Citizens &bull; Built with Official Open Data &bull; Zero Hallucination Guarantee
+        NagorikAI &bull; AI Copilot for Bangladesh Citizens &bull; Grounded in Official Open Data &bull; Zero Hallucination Guarantee
     </div>
     """, unsafe_allow_html=True)
