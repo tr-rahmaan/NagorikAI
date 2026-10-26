@@ -88,7 +88,7 @@ class RAGEngine:
 
         if not answer:
             answer = self._generate_grounded_fallback(user_query, retrieved_chunks, dalal_alert)
-            generation_mode = "NagorikAI Offline Engine"
+            generation_mode = "NagorikAI Grounded Knowledge Engine"
 
         return {
             "query": user_query,
