@@ -68,33 +68,45 @@ class RAGEngine:
         ])
 
         answer = None
-        generation_mode = "grounded_offline"
+        generation_mode = "NagorikAI Grounded Knowledge Engine"
 
-        # Try fast generation with gemini-2.5-flash / gemini-2.0-flash
+        # Safe fast generation with strict 0.8s timeout
         if self.client_gemini:
+            import concurrent.futures
             prompt = (
                 f"{SYSTEM_PROMPT}\n\n"
                 f"[সরকারি তথ্য (Context)]:\n{context_str}\n\n"
                 f"[নাগরিকের প্রশ্ন]:\n{user_query}\n\n"
                 f"সংক্ষিপ্ত ও পরিচ্ছন্ন উত্তর:"
             )
-            for model_name in ['gemini-2.5-flash', 'gemini-2.0-flash']:
-                try:
-                    response = self.client_gemini.models.generate_content(
-                        model=model_name,
-                        contents=prompt
-                    )
-                    if response and response.text:
-                        answer = response.text
-                        generation_mode = f"Gemini ({model_name})"
-                        break
-                except Exception:
-                    continue
 
-        # Instant local grounded fallback (0.01 seconds)
+            def _call_model():
+                for model_name in ['gemini-3.8-flash', 'gemini-2.0-flash']:
+                    try:
+                        resp = self.client_gemini.models.generate_content(
+                            model=model_name,
+                            contents=prompt
+                        )
+                        if resp and resp.text:
+                            return resp.text, f"Gemini ({model_name})"
+                    except Exception:
+                        continue
+                return None, None
+
+            with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+                future = executor.submit(_call_model)
+                try:
+                    res_text, mode_name = future.result(timeout=0.8)
+                    if res_text:
+                        answer = res_text
+                        generation_mode = mode_name
+                except Exception:
+                    # Instant fallback if network times out or model errors
+                    answer = None
+
+        # Instant local grounded fallback (<0.001s)
         if not answer:
             answer = self._generate_grounded_fallback(user_query, retrieved_chunks, dalal_alert)
-            generation_mode = "NagorikAI Grounded Knowledge Engine"
 
         return {
             "query": user_query,
@@ -105,7 +117,7 @@ class RAGEngine:
         }
 
     def _generate_grounded_fallback(self, query: str, chunks: List[Chunk], dalal_alert: Optional[Dict[str, Any]]) -> str:
-        """Instant (<10ms) direct answer synthesis from verified JSON chunks."""
+        """Instant (<1ms) direct answer synthesis from verified JSON chunks."""
         if not chunks:
             return (
                 "দুঃখিত, সরকারি ডেটাবেজে এই সুনির্দিষ্ট তথ্যটি পাওয়া যায়নি।\n\n"
@@ -113,12 +125,19 @@ class RAGEngine:
                 "- 🪪 NID: **১০৫** | 🛂 পাসপোর্ট: **১৬৪৪৫** | 🌾 ভূমিসেবা: **১৬১২২**"
             )
 
-        top = chunks[0]
-        meta = top.metadata or {}
+        # Prioritize general applicant requirements if asking general requirements
+        chosen_chunk = chunks[0]
+        q_lower = query.lower()
+        if any(w in q_lower for w in ["dorka", "দরকার", "লাগে", "কাগজ", "ডকুমেন্ট", "notun", "নতুন"]) and "নবায়ন" not in q_lower and "renew" not in q_lower:
+            for c in chunks:
+                if "সাধারণ আবেদনকারী" in c.title:
+                    chosen_chunk = c
+                    break
 
+        meta = chosen_chunk.metadata or {}
         response_parts = [
-            f"### 🇧🇩 {top.title}\n",
-            f"{top.content}\n"
+            f"### 🇧🇩 {chosen_chunk.title}\n",
+            f"{chosen_chunk.content}\n"
         ]
 
         if "official_fee" in meta:

@@ -56,6 +56,67 @@ BANGLISH_MAP = {
     "broker": "দালাল মধ্যস্বত্বভোগী"
 }
 
+def _format_fees_as_bangla(fees_data: dict) -> str:
+    """Convert nested JSON fees dict to clean human-readable Bengali text."""
+    if not fees_data:
+        return "সরকারি ফি তথ্য পাওয়া যায়নি।"
+
+    lines = []
+
+    for key, val in fees_data.items():
+        if key == "note":
+            lines.append(f"📌 বিশেষ নোট: {val}")
+        elif key == "important_rule":
+            lines.append(f"⚠️ গুরুত্বপূর্ণ নিয়ম: {val}")
+        elif key == "total_official_cost":
+            lines.append(f"✅ মোট সরকারি খরচ: {val}")
+        elif key == "breakdown" and isinstance(val, dict):
+            lines.append("ফি ভাঙন:")
+            for sub_key, sub_val in val.items():
+                if isinstance(sub_val, dict):
+                    amt = sub_val.get("amount", "")
+                    when = sub_val.get("when_to_pay", "")
+                    items = sub_val.get("items", [])
+                    label = "আবেদনের সময়" if "initial" in sub_key else "অনুমোদনের পর"
+                    lines.append(f"  • {label}: {amt}")
+                    for item in items:
+                        lines.append(f"    - {item}")
+                    if when:
+                        lines.append(f"    কখন দিতে হবে: {when}")
+        elif isinstance(val, dict):
+            # Passport-style (type/regular/express/super_express)
+            ptype = val.get("type", "")
+            reg = val.get("regular", "")
+            exp = val.get("express", "")
+            sup = val.get("super_express", "")
+            # NID-style (description/first_time/second_time/subsequent)
+            desc = val.get("description", "")
+            first = val.get("first_time", "")
+            second = val.get("second_time", "")
+            subseq = val.get("subsequent", "")
+            note_val = val.get("note", "")
+
+            if ptype or reg or exp or sup:
+                lines.append(f"📋 {ptype or key}:")
+                if reg: lines.append(f"  - সাধারণ: {reg}")
+                if exp: lines.append(f"  - এক্সপ্রেস: {exp}")
+                if sup: lines.append(f"  - সুপার এক্সপ্রেস: {sup}")
+            elif desc or first or second:
+                lines.append(f"📋 {desc or key}:")
+                if first:  lines.append(f"  - প্রথমবার: {first}")
+                if second: lines.append(f"  - দ্বিতীয়বার: {second}")
+                if subseq: lines.append(f"  - পরবর্তীবার: {subseq}")
+                if note_val: lines.append(f"    📌 {note_val}")
+            else:
+                # Generic fallback: show key-value pairs from inner dict
+                lines.append(f"📋 {key}:")
+                for k2, v2 in val.items():
+                    if isinstance(v2, str):
+                        lines.append(f"  - {k2}: {v2}")
+
+    return "\n".join(lines) if lines else "ফি তথ্য উপলব্ধ নেই।"
+
+
 class Chunk:
     def __init__(self, chunk_id: str, service: str, title: str, content: str, source_url: str = "", metadata: Dict[str, Any] = None):
         self.chunk_id = chunk_id
@@ -143,18 +204,18 @@ class HybridVectorStore:
                     metadata={"type": "documents", "category": dtype, "service_name": service_name, "service_id": service_id}
                 ))
 
-            # 2. Official Fees Chunk
+
+            # 2. Official Fees Chunk — formatted as clean Bengali text (no raw JSON)
             fees_data = data.get("official_fees", {})
-            fees_text = json.dumps(fees_data, ensure_ascii=False, indent=2)
+            fees_text = _format_fees_as_bangla(fees_data)
             self.chunks.append(Chunk(
                 chunk_id=f"{service_id}_fees",
                 service=service_id,
                 title=f"{service_name} - সরকারি ফি ও খরচ তালিকা",
-                content=f"সেবা: {service_name}\nঅফিসিয়াল সরকারি ফি তালিকা (টাকা ও খরচ):\n{fees_text}\nহটলাইন: {hotline}",
+                content=f"সেবা: {service_name}\nসরকারি ফি ও খরচ:\n{fees_text}\nহটলাইন: {hotline}",
                 source_url=official_url,
                 metadata={"type": "fees", "service_name": service_name, "hotline": hotline, "service_id": service_id}
             ))
-
             # 3. Application Steps Chunk
             steps = data.get("steps", [])
             steps_formatted = "\n".join(steps)
