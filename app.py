@@ -19,7 +19,7 @@ st.set_page_config(
     page_title="NagorikAI (নাগরিক AI)",
     page_icon="🇧🇩",
     layout="wide",
-    initial_sidebar_state="collapsed"
+    initial_sidebar_state="expanded"
 )
 
 # Human-Friendly Modern UI Custom CSS
@@ -98,7 +98,7 @@ st.markdown("""
         font-size: 0.9rem;
     }
 
-    /* Tab styling for clean look */
+    /* Clean Tab styling */
     .stTabs [data-baseweb="tab-list"] {
         gap: 8px;
     }
@@ -112,14 +112,18 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
+ASSETS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets")
+LOGO_PATH = os.path.join(ASSETS_DIR, "nagorik_logo.png")
 
-# Secret embedded API Key (no visible input box)
 GEMINI_KEY = os.getenv("GEMINI_API_KEY", "AIzaSyDQzW0tny_EjMP-abBEYfqg445xhx-bDzw")
 
-# Clean Sidebar: Keep only essential helpline info
+# Clean Sidebar with Local Custom High-Res Logo
 with st.sidebar:
-    st.image("https://upload.wikimedia.org/wikipedia/commons/thumb/8/84/Government_Seal_of_Bangladesh.svg/200px-Government_Seal_of_Bangladesh.svg.png", width=70)
-    st.title("🇧🇩 NagorikAI")
+    if os.path.exists(LOGO_PATH):
+        st.image(LOGO_PATH, width=85)
+    else:
+        st.markdown("<div style='font-size: 48px;'>🇧🇩</div>", unsafe_allow_html=True)
+    st.title("NagorikAI")
     st.caption("**নাগরিক সেবা সহায়িকা ও দুর্নীতি প্রতিরোধ**")
     st.divider()
 
@@ -229,7 +233,10 @@ with tab_chat:
         with st.chat_message("assistant"):
             with st.spinner("উত্তর তৈরি হচ্ছে..."):
                 response_data = rag_engine.query(active_prompt)
-                answer_text = response_data["answer"]
+                answer_text = response_data.get("answer", "")
+                if not answer_text:
+                    answer_text = "দুঃখিত, কোনো তথ্য পাওয়া যায়নি। অনুগ্রহ করে সরকারি হেল্পলাইন ১০৫, ১৬৪৪৫ বা ১৬১২২ এ যোগাযোগ করুন।"
+
                 dalal_alert = response_data.get("dalal_alert")
 
                 if dalal_alert:

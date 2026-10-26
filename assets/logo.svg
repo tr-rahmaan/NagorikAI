@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" width="200" height="200">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#064e3b" />
+      <stop offset="50%" stop-color="#047857" />
+      <stop offset="100%" stop-color="#0f766e" />
+    </linearGradient>
+    <linearGradient id="shieldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#10b981" />
+      <stop offset="100%" stop-color="#059669" />
+    </linearGradient>
+  </defs>
+  
+  <rect x="10" y="10" width="180" height="180" rx="42" fill="url(#bgGrad)"/>
+  <rect x="14" y="14" width="172" height="172" rx="38" fill="none" stroke="#f59e0b" stroke-width="2.5" stroke-opacity="0.8"/>
+  <path d="M 100 42 L 145 62 C 145 106 100 136 100 136 C 100 136 55 106 55 62 Z" fill="url(#shieldGrad)" stroke="#ffffff" stroke-width="2.5"/>
+  <circle cx="100" cy="84" r="22" fill="#ef4444"/>
+  <circle cx="100" cy="84" r="7" fill="#ffffff"/>
+  <circle cx="89" cy="76" r="3.5" fill="#ffffff"/>
+  <circle cx="111" cy="76" r="3.5" fill="#ffffff"/>
+  <circle cx="100" cy="95" r="3.5" fill="#ffffff"/>
+  <line x1="100" y1="84" x2="89" y2="76" stroke="#ffffff" stroke-width="2"/>
+  <line x1="100" y1="84" x2="111" y2="76" stroke="#ffffff" stroke-width="2"/>
+  <line x1="100" y1="84" x2="100" y2="95" stroke="#ffffff" stroke-width="2"/>
+  <polygon points="100,146 104,156 115,157 107,164 109,175 100,169 91,175 93,164 85,157 96,156" fill="#f59e0b"/>
+</svg>
