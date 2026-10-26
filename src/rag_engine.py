@@ -4,10 +4,22 @@ Fast, sub-second response times with direct model routing and zero timeout delay
 """
 
 import os
+import sys
 import ssl
 from typing import Dict, Any, List, Optional
-from src.vector_store import HybridVectorStore, Chunk
-from src.dalal_detector import DalalDetector
+
+# Fix import path: works whether called from project root or from inside src/
+try:
+    from src.vector_store import HybridVectorStore, Chunk
+    from src.dalal_detector import DalalDetector
+except ModuleNotFoundError:
+    # Running from inside the project root via app.py path
+    _src_dir = os.path.dirname(os.path.abspath(__file__))
+    _proj_dir = os.path.dirname(_src_dir)
+    if _proj_dir not in sys.path:
+        sys.path.insert(0, _proj_dir)
+    from src.vector_store import HybridVectorStore, Chunk
+    from src.dalal_detector import DalalDetector
 
 try:
     ssl._create_default_https_context = ssl._create_unverified_context
