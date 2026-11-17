@@ -62,17 +62,3 @@ python3 tests/test_rag.py
 
 ---
 
-## 🌐 Deploy to Streamlit Cloud (Free)
-
-1. Create a public repository named `NagorikAI` (or `CivicSphere-AI`) on your GitHub account.
-2. Push this project to your repository:
-   ```bash
-   git add .
-   git commit -m "Production ready NagorikAI release"
-   git push -u origin main
-   ```
-3. Visit [share.streamlit.io](https://share.streamlit.io):
-   - Select your repository.
-   - Set Main file path to: `app.py`
-   - Click **Deploy!**
-4. Paste your live deployment URL into your Congress submission form.
