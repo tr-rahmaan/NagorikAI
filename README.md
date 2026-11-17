@@ -163,10 +163,9 @@ tests/test_rag.py::TestNagorikAI::test_vision_checker_synthetic_doc PASSED     [
 
 ## 🌐 8. Official Submission & Repository Links
 
-* **Live Cloud Deployment:** [https://nagorikai.streamlit.app](https://nagorikai.streamlit.app) *(or [civicsphere-ai.streamlit.app](https://civicsphere-ai.streamlit.app))*
 * **GitHub Repository:** [https://github.com/tr-rahmaan/NagorikAI](https://github.com/tr-rahmaan/NagorikAI)
-* **Competition:** International AI Builders Congress 2026
-* **Project Track:** GovTech / AI for Good / Public Administrative Transparency
+* **Project Track:** GovTech / AI for Good / Public Administrative Transparency/ Citizen First
+  
 
 ---
 
