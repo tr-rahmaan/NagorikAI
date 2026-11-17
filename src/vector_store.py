@@ -12,16 +12,19 @@ import numpy as np
 
 BANGLISH_MAP = {
     # Services
-    "passport": "পাসপোর্ট",
-    "passpot": "পাসপোর্ট",
-    "nid": "জাতীয় পরিচয়পত্র এনআইডি nid",
-    "voter": "ভোটার আইডি কার্ড nid",
-    "namjari": "নামজারি খারিজ",
-    "namzari": "নামজারি খারিজ",
-    "kharij": "খারিজ নামজারি",
-    "jomi": "জমি ভূমি",
-    "land": "জমি ভূমি খতিয়ান",
-    "khatian": "খতিয়ান পরচা",
+    "passport": "পাসপোর্ট epassport ই-পাসপোর্ট",
+    "passpot": "পাসপোর্ট epassport",
+    "pasport": "পাসপোর্ট epassport",
+    "nid": "জাতীয় পরিচয়পত্র এনআইডি nid স্মার্টকার্ড",
+    "voter": "ভোটার আইডি কার্ড nid জাতীয় পরিচয়পত্র",
+    "id": "জাতীয় পরিচয়পত্র এনআইডি",
+    "namjari": "নামজারি খারিজ জমি ভূমি",
+    "namzari": "নামজারি খারিজ জমি ভূমি",
+    "kharij": "খারিজ নামজারি জমি ভূমি",
+    "jomi": "জমি ভূমি খতিয়ান নামজারি",
+    "land": "জমি ভূমি খতিয়ান নামজারি mutation",
+    "khatian": "খতিয়ান পরচা জমি",
+    "porcha": "পর্চা খতিয়ান জমি",
 
     # Requirements / Documents
     "dorkar": "প্রয়োজনীয় কাগজপত্র লাগবে দরকার নথি",
@@ -32,26 +35,40 @@ BANGLISH_MAP = {
     "documents": "কাগজপত্র দলিল সনদ নথিপত্র",
     "docs": "কাগজপত্র দলিল সনদ নথিপত্র",
     "certificate": "সনদপত্র সার্টিফিকেট",
+    "papers": "কাগজপত্র নথি দলিল",
 
     # Fees / Cost
     "fee": "সরকারি ফি টাকা খরচ",
     "fees": "সরকারি ফি টাকা খরচ",
-    "taka": "টাকা ফি",
+    "fi": "ফি সরকারি ফি খরচ টাকা",
+    "taka": "টাকা সরকারি ফি",
+    "tk": "টাকা ফি",
     "khoroch": "খরচ ফি টাকা",
     "cost": "খরচ ফি টাকা",
+    "koto": "কত টাকা ফি খরচ",
 
-    # Steps / Process
+    # Steps / Process / Lost
     "niyom": "নিয়ম পদ্ধতি আবেদন ধাপ",
     "rule": "নিয়ম পদ্ধতি আবেদন",
     "rules": "নিয়ম পদ্ধতি আবেদন",
     "poddhoti": "পদ্ধতি নিয়ম ধাপ",
-    "abedon": "আবেদন নিয়ম",
+    "abedon": "আবেদন নিয়ম পদ্ধতি",
     "how": "কিভাবে আবেদন নিয়ম পদ্ধতি",
     "kivabe": "কিভাবে আবেদন নিয়ম পদ্ধতি",
+    "process": "আবেদনের নিয়ম পদ্ধতি ধাপ",
+    "harano": "হারানো রি-ইস্যু জিডি gd",
+    "haraye": "হারানো রি-ইস্যু জিডি gd",
+    "lost": "হারানো রি-ইস্যু জিডি gd",
+    "reissue": "রি-ইস্যু হারানো",
+    "somoy": "সময় কার্যদিবস ডেলিভারি",
+    "time": "সময় কার্যদিবস ডেলিভারি",
+    "delivery": "ডেলিভারি কার্যদিবস সময়",
+    "urgent": "জরুরি এক্সপ্রেস",
+    "regular": "নিয়মিত সাধারণ",
 
     # Corruption / Broker
     "dalal": "দালাল প্রতারণা ঘুষ অতিরিক্ত টাকা",
-    "ghush": "ঘুষ দুর্নীতি দালাল",
+    "ghush": "ঘুষ দুর্নীতি দালাল অতিরিক্ত",
     "bribe": "ঘুষ দুর্নীতি দালাল",
     "broker": "দালাল মধ্যস্বত্বভোগী"
 }
@@ -201,7 +218,15 @@ class HybridVectorStore:
                     title=f"{service_name} - প্রয়োজনীয় কাগজপত্র ও নথিপত্র ({dtype})",
                     content=f"সেবা: {service_name}\nপ্রয়োজনীয় কাগজপত্র ও কি কি লাগবে:\n{docs_formatted}\nঅফিসিয়াল ওয়েবসাইট: {official_url}",
                     source_url=official_url,
-                    metadata={"type": "documents", "category": dtype, "service_name": service_name, "service_id": service_id}
+                    metadata={
+                        "type": "documents",
+                        "category": dtype,
+                        "docs": dlist,
+                        "service_name": service_name,
+                        "service_id": service_id,
+                        "hotline": hotline,
+                        "official_url": official_url,
+                    }
                 ))
 
 
@@ -214,7 +239,14 @@ class HybridVectorStore:
                 title=f"{service_name} - সরকারি ফি ও খরচ তালিকা",
                 content=f"সেবা: {service_name}\nসরকারি ফি ও খরচ:\n{fees_text}\nহটলাইন: {hotline}",
                 source_url=official_url,
-                metadata={"type": "fees", "service_name": service_name, "hotline": hotline, "service_id": service_id}
+                metadata={
+                    "type": "fees",
+                    "service_name": service_name,
+                    "hotline": hotline,
+                    "service_id": service_id,
+                    "official_url": official_url,
+                    "official_fees": fees_data,
+                }
             ))
             # 3. Application Steps Chunk
             steps = data.get("steps", [])
@@ -278,9 +310,20 @@ class HybridVectorStore:
         for t, freq in doc_freq.items():
             self.idf[t] = math.log(1.0 + (num_docs - freq + 0.5) / (freq + 0.5))
 
+    def detect_service(self, text: str) -> Optional[str]:
+        """Identifies target civic service from query text."""
+        t = text.lower()
+        if any(w in t for w in ["পাসপোর্ট", "passport", "ই-পাসপোর্ট", "epassport", "এমআরপি", "mrp"]):
+            return "epassport"
+        if any(w in t for w in ["এনআইডি", "nid", "ভোটার", "voter", "পরিচয়পত্র", "পরিচয়পত্র", "স্মার্টকার্ড", "স্মার্ট কার্ড", "স্মার্ট"]):
+            return "nid_correction"
+        if any(w in t for w in ["নামজারি", "খারিজ", "নামপত্তন", "জমি", "ভূমি", "খতিয়ান", "খতিয়ান", "পর্চা", "mutation", "land", "দখল", "ডিসিআর", "dcr", "খাজনা"]):
+            return "land_mutation"
+        return None
+
     def search(self, query: str, top_k: int = 3, service_filter: str = None) -> List[Tuple[Chunk, float]]:
         """
-        Retrieves top_k chunks using query expansion, BM25 scoring, and intent boosting.
+        Retrieves top_k chunks using query expansion, BM25 scoring, service-awareness, and intent boosting.
         """
         expanded = self.expand_query(query)
         tokens = self.tokenize(expanded)
@@ -288,9 +331,26 @@ class HybridVectorStore:
             return [(c, 1.0) for c in self.chunks[:top_k]]
 
         q_lower = query.lower()
+        
+        # Detect targeted civic service
+        detected_svc = service_filter or self.detect_service(f"{q_lower} {expanded}")
+
         # Intent detection
-        is_doc_intent = any(w in q_lower or w in expanded for w in ["কাগজ", "কাগজপত্র", "দলিল", "সনদ", "কি কি", "কী কী", "লাগবে", "দরকার", "dorka", "lagbe", "docs", "document"])
-        is_fee_intent = any(w in q_lower or w in expanded for w in ["ফি", "টাকা", "খরচ", "কত", "fee", "cost", "taka"])
+        is_doc_intent = any(w in q_lower or w in expanded for w in [
+            "কাগজ", "কাগজপত্র", "দলিল", "সনদ", "কি কি", "কী কী", "লাগবে", "দরকার", "dorka", "lagbe", "docs", "document", "papers"
+        ])
+        is_fee_intent = any(w in q_lower or w in expanded for w in [
+            "ফি", "টাকা", "খরচ", "কত", "fee", "cost", "taka", "tk", "চার্জ", "কতো"
+        ])
+        is_steps_intent = any(w in q_lower or w in expanded for w in [
+            "কিভাবে", "কীভাবে", "নিয়ম", "নিয়ম", "পদ্ধতি", "ধাপ", "কি করব", "কী করব", "কি করবো", "কী করবো", "আবেদন", "how", "process", "step"
+        ])
+        is_lost_intent = any(w in q_lower or w in expanded for w in [
+            "হারিয়ে", "হারানো", "নষ্ট", "হারায়", "lost", "reissue", "রি-ইস্যু", "জিডি", "gd"
+        ])
+        is_dalal_intent = any(w in q_lower or w in expanded for w in [
+            "দালাল", "ঘুষ", "টাকা চাচ্ছে", "অতিরিক্ত টাকা", "অতিরিক্ত ফি", "প্রতারণা", "bribe", "broker"
+        ])
 
         scores: List[float] = []
         k1 = 1.5
@@ -313,18 +373,29 @@ class HybridVectorStore:
                     denominator = freq + k1 * (1.0 - b + b * (doc_len / (self.avg_doc_len + 1e-6)))
                     score += idf * (numerator / denominator)
 
-            # Title matches give massive precision boosts
+            # Title matches give strong precision boosts
             title_lower = chunk.title.lower()
             for t in tokens:
                 if t in title_lower:
                     score += 3.0
 
+            # Service boosting: ensure matching service chunks dominate
+            if detected_svc:
+                if chunk.service == detected_svc:
+                    score += 30.0
+                else:
+                    score -= 15.0
+
             # Intent boost
             ctype = chunk.metadata.get("type", "")
             if is_doc_intent and ctype == "documents":
-                score += 5.0
+                score += 8.0
+            elif (is_steps_intent or is_lost_intent) and ctype == "steps":
+                score += 10.0
             elif is_fee_intent and ctype == "fees":
-                score += 5.0
+                score += 8.0
+            elif is_dalal_intent and ctype == "dalal_warning":
+                score += 7.0
 
             scores.append(score)
 

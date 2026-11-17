@@ -3,7 +3,7 @@
 **Event:** International AI Builders Congress (`bbbf4c45-c600-4ae6-8abf-b59e21f93076`)  
 **Phase:** Idea to Unicorn — Preliminary Submission (`b4261d40-df30-4db0-89ab-782ad8d1e357`)  
 **Deadline:** October 31, 2026, 11:59 PM BST  
-**Submission Portal:** [CloudCamp Bangladesh Submission Page](https://cloudcampbd.com/submissions/new?event=bbbf4c45-c600-4ae6-8abf-b59e21f93076&phase=b4261d40-df30-4db0-89ab-782ad8d1e357&team=d4578244-3349-4cb8-baba-6b00c7028aff)
+
 
 ---
 

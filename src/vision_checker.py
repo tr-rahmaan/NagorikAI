@@ -41,24 +41,24 @@ class DocumentVisionChecker:
                 client = genai.Client(api_key=gemini_key)
 
                 prompt = f"""
-                You are NagorikAI (নাগরিক AI) Document Inspector for Bangladesh government citizen services.
-                Document type claimed by user: {doc_type}
+                You are CivicSphere Document Inspector for Bangladesh Government citizen services.
+                Document type claimed: {doc_type}
                 Expected applicant name (if provided): {expected_name or 'Not specified'}
 
-                Examine this uploaded document image carefully and provide an inspection report in Bengali (বাংলা):
-                1. 🔍 **ডকুমেন্টের ধরন ও দৃশ্যমানতা:** (Is it readable? Is it blurred or truncated?)
-                2. ✍️ **স্বাক্ষর ও সিলমোহর (Signatures/Stamps):** (Are signatures present where required?)
-                3. 🔤 **নাম ও তথ্য স্পষ্টতা:** (Is applicant name clearly legible? Any spelling inconsistencies?)
-                4. ⚠️ **সম্ভাব্য ত্রুটি বা প্রত্যাখ্যাত হওয়ার ঝুঁকি:** (Missing mandatory sections, blurred photo, crop issues)
-                5. 💡 **সুপারিশ:** (Exact advice to applicant before submitting to official portal).
+                Examine this uploaded document image carefully and provide an inspection report in formal Bengali (বাংলা):
+                1. ডকুমেন্টের ধরন ও দৃশ্যমানতা (Is it readable? Is it blurred or truncated?)
+                2. স্বাক্ষর ও সিলমোহর (Signatures/Stamps: Are official signatures and seals present where required?)
+                3. নাম ও তথ্য স্পষ্টতা (Is applicant name clearly legible? Any spelling inconsistencies?)
+                4. সম্ভাব্য ত্রুটি বা ঝুঁকির ক্ষেত্র (Missing mandatory sections, blurred photo, crop issues)
+                5. প্রাতিষ্ঠানিক সুপারিশ (Exact guidance for the applicant before submitting to official portal).
 
-                Format your response clearly with emojis and markdown in polite Bengali.
+                Keep the tone formal, institutional, and objective. Avoid excessive emojis. Use standard markdown sections and bullet points.
                 """
 
                 with open(image_path, "rb") as f:
                     image_bytes = f.read()
 
-                for model_name in ['gemini-3.8-flash', 'gemini-2.5-flash', 'gemini-2.0-flash']:
+                for model_name in ['gemini-3.5-flash-lite', 'gemini-3.5-flash', 'gemini-3.1-flash-lite']:
                     try:
                         response = client.models.generate_content(
                             model=model_name,
@@ -83,7 +83,7 @@ class DocumentVisionChecker:
         # Intelligent Heuristic Pre-flight Inspection Report (Offline Fallback)
         checklist_items = {
             "nid": [
-                ("১৭ বা ১০ ডিজিটের NID নম্বর স্পষ্ট দৃশ্যমান", True),
+                ("১০ বা ১৭ ডিজিটের NID নম্বর স্পষ্ট দৃশ্যমান", True),
                 ("বাংলা ও ইংরেজি নাম স্পষ্ট (কোনো ওভারল্যাপিং নেই)", True),
                 ("জন্ম তারিখ ও রক্তের গ্রুপ সুস্পষ্ট", True),
                 ("স্বাক্ষর (Signature) অংশ সুস্পষ্ট ও দৃশ্যমান", True),
@@ -114,24 +114,23 @@ class DocumentVisionChecker:
 
         items = checklist_items.get(doc_type, checklist_items["nid"])
         report_lines = [
-            f"### 📋 NagorikAI ডকুমেন্ট প্রাক-যাচাই রিপোর্ট",
-            f"**ডকুমেন্ট রেজোলিউশন:** `{width}x{height} px` {'⚠️ (কম রেজোলিউশন, স্পষ্ট স্ক্যান কপি সুপারিশকৃত)' if is_low_res else '✅ (উচ্চ মানসম্পন্ন)'}",
-            f"**পরীক্ষিত নাম:** `{expected_name or 'সাধারণ আবেদনকারী'}`\n",
-            "#### 🔍 স্বয়ংক্রিয় অডিট পয়েন্ট:"
+            "### আবেদন নথি প্রাক-যাচাইকরণ প্রতিবেদন",
+            f"- **ডকুমেন্ট রেজোলিউশন:** `{width}x{height} px` {'(সতর্কতা: কম রেজোলিউশন, স্পষ্ট স্ক্যান কপি বাঞ্ছনীয়)' if is_low_res else '(মানসম্পন্ন)'}",
+            f"- **আবেদনকারীর নাম:** `{expected_name or 'সাধারণ আবেদনকারী'}`\n",
+            "**স্বয়ংক্রিয় নিরীক্ষা সূচক:**"
         ]
 
         all_passed = True
         for name, passed in items:
-            badge = "✅" if passed else "⚠️"
-            status = "সফল" if passed else "সতর্কতা (পুনরায় স্পষ্ট কপি স্ক্যান করুন)"
-            report_lines.append(f"- {badge} **{name}:** {status}")
+            status = "যাচাইকৃত (সফল)" if passed else "সতর্কতা (পুনরায় স্পষ্ট কপি স্ক্যান করুন)"
+            report_lines.append(f"- **{name}:** {status}")
             if not passed:
                 all_passed = False
 
         if all_passed:
-            report_lines.append("\n> 🟢 **চূড়ান্ত মূল্যায়ন:** আপনার ডকুমেন্টটি সরকারি পোর্টালে আপলোডের জন্য সম্পূর্ণ উপযোগী মনে হচ্ছে।")
+            report_lines.append("\n**সার্বিক মূল্যায়ন:** আপনার নথিটি সরকারি পোর্টালে দাখিলের প্রাথমিক মানদণ্ড পূরণ করেছে।")
         else:
-            report_lines.append("\n> 🟡 **চূড়ান্ত মূল্যায়ন:** কিছু অংশে অস্পষ্টতা দেখা যাচ্ছে। সরকারি আবেদন বাতিলের ঝুঁকি এড়াতে আরও স্পষ্ট স্ক্যান কপি আপলোড করার পরামর্শ দেওয়া হচ্ছে।")
+            report_lines.append("\n**সার্বিক মূল্যায়ন:** নথির কিছু অংশে অস্পষ্টতা পরিলক্ষিত হয়েছে। সরকারি আবেদন বাতিলের ঝুঁকি এড়াতে আরও স্পষ্ট স্ক্যান কপি সংযুক্ত করার সুপারিশ করা হচ্ছে।")
 
         return {
             "status": "success",
