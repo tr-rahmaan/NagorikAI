@@ -302,7 +302,7 @@ with tab_chat:
     q_col1, q_col2, q_col3, q_col4 = st.columns(4)
 
     if q_col1.button("পাসপোর্টে অতিরিক্ত ফি আদায় করলে করণীয়?", use_container_width=True):
-        st.session_state.pending_prompt = "পাসপোর্টে অতিরিক্ত ফি আদায় করলে করণীয় কি? দালাল আট হাজার টাকা চাচ্ছে, সরকারি ফি কত এবং কোথায় অভিযোগ করব?"
+        st.session_state.pending_prompt = "পাসপোর্টে অতিরিক্ত ফি আদায় করলে করণীয় কি? সরকারি ফি কত এবং অতিরিক্ত ফি দাবি করলে কোথায় অভিযোগ করব?"
         st.rerun()
 
     if q_col2.button("NID নাম সংশোধনে কী কী নথি লাগে?", use_container_width=True):
